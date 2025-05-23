@@ -24,10 +24,3 @@ type FeatureFlagProvider interface {
 	//   - error: An error if the feature flags cannot be retrieved
 	GetFeatureFlags() ([]FeatureFlag, error)
 }
-
-// BytesFeatureFlagProvider provides feature flags from a byte array source.
-// This can be useful for loading feature flags from local files or embedded resources.
-type BytesFeatureFlagProvider struct {
-	// Bytes contains the raw feature flag data
-	Bytes []byte
-}
