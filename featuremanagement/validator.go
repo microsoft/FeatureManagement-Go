@@ -78,11 +78,11 @@ func validateAllocation(id string, allocation *VariantAllocation) error {
 		}
 
 		if p.From < 0 || p.From > 100 {
-			return fmt.Errorf("invalid feature flag %s: percentile 'from' must be between 0 and 100", id)
+			return fmt.Errorf("invalid feature flag %s: percentile 'from' at index %d must be between 0 and 100", id, i)
 		}
 
 		if p.To < 0 || p.To > 100 {
-			return fmt.Errorf("invalid feature flag %s: percentile 'to' must be between 0 and 100", id)
+			return fmt.Errorf("invalid feature flag %s: percentile 'to' at index %d must be between 0 and 100", id, i)
 		}
 	}
 
