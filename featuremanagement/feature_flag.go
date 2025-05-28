@@ -19,7 +19,7 @@ type FeatureFlag struct {
 	Conditions *Conditions `json:"conditions,omitempty"`
 
 	// Variants represents different configurations of this feature
-	Variants []Variant `json:"variants,omitempty"`
+	Variants []VariantDefinition `json:"variants,omitempty"`
 
 	// Allocation determines how variants are assigned to users
 	Allocation *VariantAllocation `json:"allocation,omitempty"`

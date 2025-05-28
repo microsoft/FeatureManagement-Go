@@ -1,9 +1,8 @@
 package featuremanagement
 
-// Variant represents a feature configuration variant.
-// Variants allow different configurations or implementations of a feature
-// to be assigned to different users.
-type Variant struct {
+// VariantDefinition represents the configuration definition of a feature variant.
+// It defines the properties of a variant in the feature flag configuration.
+type VariantDefinition struct {
 	// Name uniquely identifies this variant
 	Name string `json:"name"`
 
@@ -13,6 +12,17 @@ type Variant struct {
 	// StatusOverride overrides the enabled state of the feature when this variant is assigned
 	// Values: "None", "Enabled", "Disabled"
 	StatusOverride string `json:"status_override,omitempty"`
+}
+
+// Variant represents a feature configuration variant.
+// Variants allow different configurations or implementations of a feature
+// to be assigned to different users.
+type Variant struct {
+	// Name uniquely identifies this variant
+	Name string `json:"name"`
+
+	// ConfigurationValue holds the value for this variant
+	ConfigurationValue interface{} `json:"configuration_value,omitempty"`
 }
 
 // VariantAllocation defines rules for assigning variants to users.
