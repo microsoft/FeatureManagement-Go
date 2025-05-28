@@ -1,5 +1,5 @@
-// Package azureappconfig provides implementation of feature flag providers for Azure App Configuration.
-package azureappconfig
+// Package azureappconfiguration provides implementation of feature flag providers for Azure App Configuration.
+package azureappconfiguration
 
 import (
 	"github.com/microsoft/FeatureManagement-Go/featuremanagement"
