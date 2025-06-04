@@ -152,7 +152,7 @@ type EvaluationResult struct {
 	// TargetingID is the identifier used for consistent targeting
 	TargetingID string
 	// Variant is the selected variant (if any)
-	Variant *VariantDefinition
+	Variant *Variant
 	// VariantAssignmentReason explains why the variant was assigned
 	VariantAssignmentReason VariantAssignmentReason
 }
