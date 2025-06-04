@@ -1,0 +1,48 @@
+name: AppConfiguration-GoFeatureManagement CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ["1.21", "1.22", "1.23", "1.24"]
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
+
+    - name: Install dependencies
+      working-directory: ./azureappconfiguration
+      run: go mod download
+
+    - name: Build
+      working-directory: ./azureappconfiguration
+      run: go build -v ./...
+
+    - name: Test
+      working-directory: ./azureappconfiguration
+      run: go test -race -v  ./...
+      if: runner.os != 'Windows'
+
+    - name: Test (without race detector)
+      working-directory: ./azureappconfiguration
+      run: go test -v ./...
+      if: runner.os == 'Windows'
