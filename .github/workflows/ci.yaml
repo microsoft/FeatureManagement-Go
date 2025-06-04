@@ -30,19 +30,19 @@ jobs:
         cache: true
 
     - name: Install dependencies
-      working-directory: ./azureappconfiguration
+      working-directory: ./featuremanagement
       run: go mod download
 
     - name: Build
-      working-directory: ./azureappconfiguration
+      working-directory: ./featuremanagement
       run: go build -v ./...
 
     - name: Test
-      working-directory: ./azureappconfiguration
+      working-directory: ./featuremanagement
       run: go test -race -v  ./...
       if: runner.os != 'Windows'
 
     - name: Test (without race detector)
-      working-directory: ./azureappconfiguration
+      working-directory: ./featuremanagement
       run: go test -v ./...
       if: runner.os == 'Windows'
