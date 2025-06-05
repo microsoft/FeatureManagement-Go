@@ -8,6 +8,20 @@ import (
 	"log"
 )
 
+// EvaluationResult contains information about a feature flag evaluation
+type EvaluationResult struct {
+	// Feature contains the evaluated feature flag
+	Feature *FeatureFlag
+	// Enabled indicates the final state of the feature after evaluation
+	Enabled bool
+	// TargetingID is the identifier used for consistent targeting
+	TargetingID string
+	// Variant is the selected variant (if any)
+	Variant *Variant
+	// VariantAssignmentReason explains why the variant was assigned
+	VariantAssignmentReason VariantAssignmentReason
+}
+
 // FeatureManager is responsible for evaluating feature flags and their variants.
 // It is the main entry point for interacting with the feature management library.
 type FeatureManager struct {
@@ -53,7 +67,13 @@ func NewFeatureManager(provider FeatureFlagProvider, filters []FeatureFilter) (*
 //   - bool: true if the feature is enabled, false otherwise
 //   - error: An error if the feature flag cannot be found or evaluated
 func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
-	res, err := fm.evaluateFeature(featureName, nil)
+	// Get the feature flag
+	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
+	if err != nil {
+		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+	}
+	
+	res, err := fm.evaluateFeature(featureFlag, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
 	}
@@ -72,7 +92,13 @@ func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
 //   - bool: true if the feature is enabled, false otherwise
 //   - error: An error if the feature flag cannot be found or evaluated
 func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext any) (bool, error) {
-	res, err := fm.evaluateFeature(featureName, appContext)
+	// Get the feature flag
+	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
+	if err != nil {
+		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+	}
+
+	res, err := fm.evaluateFeature(featureFlag, appContext)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
 	}
@@ -113,7 +139,7 @@ func (fm *FeatureManager) OnFeatureEvaluated(callback func(evalRes EvaluationRes
 func (fm *FeatureManager) GetFeatureNames() []string {
 	flags, err := fm.featureProvider.GetFeatureFlags()
 	if err != nil {
-		log.Printf("failed to get feature flags: %v", err)
+		log.Printf("failed to get feature flag names: %v", err)
 		return nil
 	}
 
@@ -177,13 +203,9 @@ func (fm *FeatureManager) isEnabled(featureFlag FeatureFlag, appContext any) (bo
 	return !shortCircuitEvalResult, nil
 }
 
-func (fm *FeatureManager) evaluateFeature(featureName string, appContext any) (EvaluationResult, error) {
-	result := EvaluationResult{}
-
-	// Get the feature flag
-	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
-	if err != nil {
-		return result, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext any) (EvaluationResult, error) {
+	result := EvaluationResult{
+		Feature: &featureFlag,
 	}
 
 	// Validate feature flag format
@@ -194,7 +216,7 @@ func (fm *FeatureManager) evaluateFeature(featureName string, appContext any) (E
 	// Evaluate if feature is enabled
 	enabled, err := fm.isEnabled(featureFlag, appContext)
 	if err != nil {
-		return result, fmt.Errorf("failed to evaluate feature flag: %w", err)
+		return result, err
 	}
 	result.Enabled = enabled
 
