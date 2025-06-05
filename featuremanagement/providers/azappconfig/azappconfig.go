@@ -10,11 +10,12 @@ import (
 	"sync"
 
 	"github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration"
+	fm "github.com/microsoft/Featuremanagement-Go/featuremanagement"
 )
 
 type FeatureFlagProvider struct {
 	azappcfg *azureappconfiguration.AzureAppConfiguration
-	fm       FeatureManagement
+	fm       fm.FeatureManagement
 	mu       sync.RWMutex
 }
 
@@ -24,19 +25,19 @@ func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguratio
 		return nil, fmt.Errorf("failed to get bytes from Azure App Configuration: %w", err)
 	}
 
-	var fm FeatureManagement
-	if err := json.Unmarshal(jsonBytes, &fm); err != nil {
+	var featureSettings fm.FeatureManagement
+	if err := json.Unmarshal(jsonBytes, &featureSettings); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal feature management: %w", err)
 	}
 
 	provider := &FeatureFlagProvider{
 		azappcfg: azappcfg,
-		fm:       fm,
+		fm:       featureSettings,
 	}
 
 	// Register refresh callback to update feature management on configuration changes
 	azappcfg.OnRefreshSuccess(func() {
-		var updatedFM FeatureManagement
+		var updatedFM fm.FeatureManagement
 		err := azappcfg.Unmarshal(&updatedFM, nil)
 		if err != nil {
 			log.Printf("Error unmarshalling updated configuration: %s", err)
@@ -51,13 +52,13 @@ func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguratio
 	return provider, nil
 }
 
-func (p *FeatureFlagProvider) GetFeatureFlags() ([]FeatureFlag, error) {
+func (p *FeatureFlagProvider) GetFeatureFlags() ([]fm.FeatureFlag, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.fm.FeatureFlags, nil
 }
 
-func (p *FeatureFlagProvider) GetFeatureFlag(id string) (FeatureFlag, error) {
+func (p *FeatureFlagProvider) GetFeatureFlag(id string) (fm.FeatureFlag, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	for _, flag := range p.fm.FeatureFlags {
@@ -66,5 +67,5 @@ func (p *FeatureFlagProvider) GetFeatureFlag(id string) (FeatureFlag, error) {
 		}
 	}
 
-	return FeatureFlag{}, fmt.Errorf("feature flag with ID %s not found", id)
+	return fm.FeatureFlag{}, fmt.Errorf("feature flag with ID %s not found", id)
 }
