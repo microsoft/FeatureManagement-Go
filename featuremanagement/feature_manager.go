@@ -129,6 +129,11 @@ func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Varian
 // The registered callback receives an EvaluationResult struct containing details about the
 // feature evaluation.
 func (fm *FeatureManager) OnFeatureEvaluated(callback func(evalRes EvaluationResult)) {
+	if callback == nil {
+		log.Println("callback cannot be nil")
+		return
+	}
+
 	fm.onFeatureEvaluated = append(fm.onFeatureEvaluated, callback)
 }
 
@@ -143,7 +148,7 @@ func (fm *FeatureManager) GetFeatureNames() []string {
 		return nil
 	}
 
-	res := make([]string, 0)
+	res := make([]string, len(flags))
 	for _, flag := range flags {
 		res = append(res, flag.ID)
 	}
