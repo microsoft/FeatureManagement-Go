@@ -130,7 +130,6 @@ func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Varian
 // feature evaluation.
 func (fm *FeatureManager) OnFeatureEvaluated(callback func(evalRes EvaluationResult)) {
 	if callback == nil {
-		log.Println("callback cannot be nil")
 		return
 	}
 
@@ -284,7 +283,9 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 	// Trigger callbacks if telemetry is enabled
 	if featureFlag.Telemetry != nil && featureFlag.Telemetry.Enabled && len(fm.onFeatureEvaluated) > 0 {
 		for _, callback := range fm.onFeatureEvaluated {
-			callback(result)
+			if callback != nil {
+				callback(result)
+			}
 		}
 	}
 
