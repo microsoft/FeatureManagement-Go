@@ -30,24 +30,36 @@ type FeatureManager struct {
 	onFeatureEvaluated []func(evalRes EvaluationResult)
 }
 
+// Options configures the behavior of the FeatureManager.
+type Options struct {
+    // Filters is a list of custom feature filters that will be used during feature flag evaluation.
+    // Each filter must implement the FeatureFilter interface.
+    Filters []FeatureFilter
+}
+
 // NewFeatureManager creates and initializes a new instance of the FeatureManager.
 // This is the entry point for using feature management functionality.
 //
 // Parameters:
 //   - provider: A FeatureFlagProvider that supplies feature flag definitions
 //     from a source such as Azure App Configuration or a local JSON file
-//   - filters: Custom filters for conditional feature evaluation
+//   - *options: Configuration options for the FeatureManager, including custom filters
+//     for conditional feature evaluation
 //
 // Returns:
 //   - *FeatureManager: A configured feature manager instance ready for use
 //   - error: An error if initialization fails
-func NewFeatureManager(provider FeatureFlagProvider, filters []FeatureFilter) (*FeatureManager, error) {
+func NewFeatureManager(provider FeatureFlagProvider, options *Options) (*FeatureManager, error) {
 	if provider == nil {
 		return nil, fmt.Errorf("feature provider cannot be nil")
 	}
 
+	if options == nil {
+		options = &Options{}
+	}
+
 	featureFilters := make(map[string]FeatureFilter)
-	for _, filter := range filters {
+	for _, filter := range options.Filters {
 		featureFilters[filter.Name()] = filter
 	}
 
