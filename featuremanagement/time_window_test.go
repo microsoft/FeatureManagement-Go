@@ -76,7 +76,7 @@ func TestTimeWindowFilterIntegration(t *testing.T) {
 	provider := &mockFeatureFlagProvider{featureFlags: featureManagement.FeatureFlags}
 
 	// Create feature manager
-	manager, err := NewFeatureManager(provider, []FeatureFilter{&TimeWindowFilter{}})
+	manager, err := NewFeatureManager(provider, nil)
 	if err != nil {
 		t.Fatalf("Failed to create feature manager: %v", err)
 	}
