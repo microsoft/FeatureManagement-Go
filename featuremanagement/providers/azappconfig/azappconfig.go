@@ -4,7 +4,6 @@
 package azappconfig
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -14,25 +13,20 @@ import (
 )
 
 type FeatureFlagProvider struct {
-	azappcfg *azureappconfiguration.AzureAppConfiguration
-	fm       fm.FeatureManagement
-	mu       sync.RWMutex
+	azappcfg     *azureappconfiguration.AzureAppConfiguration
+	featureFlags []fm.FeatureFlag
+	mu           sync.RWMutex
 }
 
 func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguration) (*FeatureFlagProvider, error) {
-	jsonBytes, err := azappcfg.GetBytes(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get bytes from Azure App Configuration: %w", err)
-	}
-
-	var featureSettings fm.FeatureManagement
-	if err := json.Unmarshal(jsonBytes, &featureSettings); err != nil {
+	var featureManagement fm.FeatureManagement
+	if err := azappcfg.Unmarshal(&featureManagement, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal feature management: %w", err)
 	}
 
 	provider := &FeatureFlagProvider{
-		azappcfg: azappcfg,
-		fm:       featureSettings,
+		azappcfg:     azappcfg,
+		featureFlags: featureManagement.FeatureFlags,
 	}
 
 	// Register refresh callback to update feature management on configuration changes
@@ -46,7 +40,7 @@ func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguratio
 
 		provider.mu.Lock()
 		defer provider.mu.Unlock()
-		provider.fm = updatedFM
+		provider.featureFlags = updatedFM.FeatureFlags
 	})
 
 	return provider, nil
@@ -55,13 +49,13 @@ func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguratio
 func (p *FeatureFlagProvider) GetFeatureFlags() ([]fm.FeatureFlag, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.fm.FeatureFlags, nil
+	return p.featureFlags, nil
 }
 
 func (p *FeatureFlagProvider) GetFeatureFlag(id string) (fm.FeatureFlag, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	for _, flag := range p.fm.FeatureFlags {
+	for _, flag := range p.featureFlags {
 		if flag.ID == id {
 			return flag, nil
 		}

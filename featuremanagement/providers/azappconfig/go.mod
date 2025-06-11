@@ -1,4 +1,4 @@
-module github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azureappconfiguration
+module github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
 
 go 1.23.2
 
