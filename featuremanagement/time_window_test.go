@@ -22,8 +22,8 @@ func TestTimeWindowFilterIntegration(t *testing.T) {
                         {
                             "name": "Microsoft.TimeWindow",
                             "parameters": {
-                                "Start": "2023-06-29T07:00:00Z",
-                                "End": "2023-08-30T07:00:00Z"
+                                "Start": "Thu, 29 Jun 2023 07:00:00 GMT",
+                                "End": "Wed, 30 Aug 2023 07:00:00 GMT"
                             }
                         }
                     ]
@@ -38,8 +38,8 @@ func TestTimeWindowFilterIntegration(t *testing.T) {
                         {
                             "name": "Microsoft.TimeWindow",
                             "parameters": {
-                                "Start": "3023-06-27T06:00:00Z",
-                                "End": "3023-06-28T06:05:00Z"
+                                "Start": "Fri, 27 Jun 3023 06:00:00 GMT",
+                                "End": "Sat, 28 Jun 3023 06:05:00 GMT"
                             }
                         }
                     ]
@@ -54,8 +54,8 @@ func TestTimeWindowFilterIntegration(t *testing.T) {
                         {
                             "name": "Microsoft.TimeWindow",
                             "parameters": {
-                                "Start": "2023-06-29T07:00:00Z",
-                                "End": "3023-06-28T06:05:00Z"
+                                "Start": "Thu, 29 Jun 2023 07:00:00 GMT",
+                                "End": "Sat, 28 Jun 3023 06:05:00 GMT"
                             }
                         }
                     ]

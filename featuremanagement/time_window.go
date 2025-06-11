@@ -37,7 +37,7 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 
 	// Parse start time if provided
 	if params.Start != "" {
-		parsed, err := time.Parse(time.RFC3339, params.Start)
+		parsed, err := time.Parse(time.RFC1123, params.Start)
 		if err != nil {
 			return false, fmt.Errorf("invalid start time format for feature %s: %w", evalCtx.FeatureName, err)
 		}
@@ -46,7 +46,7 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 
 	// Parse end time if provided
 	if params.End != "" {
-		parsed, err := time.Parse(time.RFC3339, params.End)
+		parsed, err := time.Parse(time.RFC1123, params.End)
 		if err != nil {
 			return false, fmt.Errorf("invalid end time format for feature %s: %w", evalCtx.FeatureName, err)
 		}
