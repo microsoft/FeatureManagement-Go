@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -37,7 +38,7 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 
 	// Parse start time if provided
 	if params.Start != "" {
-		parsed, err := time.Parse(time.RFC1123, params.Start)
+		parsed, err := parseTime(params.Start)
 		if err != nil {
 			return false, fmt.Errorf("invalid start time format for feature %s: %w", evalCtx.FeatureName, err)
 		}
@@ -46,7 +47,7 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 
 	// Parse end time if provided
 	if params.End != "" {
-		parsed, err := time.Parse(time.RFC1123, params.End)
+		parsed, err := parseTime(params.End)
 		if err != nil {
 			return false, fmt.Errorf("invalid end time format for feature %s: %w", evalCtx.FeatureName, err)
 		}
@@ -68,4 +69,36 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 	isBeforeEnd := endTime == nil || now.Before(*endTime)
 
 	return isAfterStart && isBeforeEnd, nil
+}
+
+func parseTime(timeStr string) (time.Time, error) {
+	// List of formats to try
+	formats := []string{
+		time.RFC1123,
+		time.RFC3339,
+		time.RFC3339Nano,
+		time.RFC1123Z,
+		time.RFC822,
+		time.RFC822Z,
+		time.RFC850,
+		time.UnixDate,
+		time.RubyDate,
+		time.ANSIC,
+		time.Layout,
+	}
+
+	var parseErrors []string
+
+	// Try each format in sequence
+	for _, format := range formats {
+		t, err := time.Parse(format, timeStr)
+		if err == nil {
+			return t, nil // Return the first successful parse
+		}
+		parseErrors = append(parseErrors, fmt.Sprintf("format %q: %v", format, err))
+	}
+
+	// All formats failed
+	return time.Time{}, fmt.Errorf("unable to parse time %q with any known format:\n%s",
+		timeStr, strings.Join(parseErrors, "\n"))
 }
