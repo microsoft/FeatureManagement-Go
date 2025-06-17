@@ -87,18 +87,15 @@ func parseTime(timeStr string) (time.Time, error) {
 		time.Layout,
 	}
 
-	var parseErrors []string
-
 	// Try each format in sequence
 	for _, format := range formats {
 		t, err := time.Parse(format, timeStr)
 		if err == nil {
 			return t, nil // Return the first successful parse
 		}
-		parseErrors = append(parseErrors, fmt.Sprintf("format %q: %v", format, err))
 	}
 
 	// All formats failed
 	return time.Time{}, fmt.Errorf("unable to parse time %q with any known format:\n%s",
-		timeStr, strings.Join(parseErrors, "\n"))
+		timeStr, strings.Join(formats, "\n"))
 }
