@@ -149,8 +149,7 @@ func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Varian
 	}
 
 	if res.Variant == nil {
-		log.Printf("no variant assigned for feature %s", featureName)
-		return Variant{}, nil
+		return Variant{}, fmt.Errorf("no variant assigned for feature %s", featureName)
 	}
 
 	return *res.Variant, nil
@@ -249,6 +248,9 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 		if tc, ok := appContext.(TargetingContext); ok {
 			result.TargetingID = tc.UserID
 			targetingContext = &tc
+		} else if tc, ok := appContext.(*TargetingContext); ok {
+			result.TargetingID = tc.UserID
+			targetingContext = tc
 		}
 	}
 
