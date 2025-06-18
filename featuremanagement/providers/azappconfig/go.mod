@@ -1,6 +1,6 @@
 module github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
 
-go 1.23.2
+go 1.23.0
 
 require github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration v1.0.0-beta.2
 
