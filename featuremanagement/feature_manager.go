@@ -137,8 +137,23 @@ func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext
 //   - Variant: The assigned variant with its name and configuration value
 //   - error: An error if the feature flag cannot be found or evaluated
 func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Variant, error) {
-	// Implementation would be here
-	return Variant{}, nil
+	// Get the feature flag
+	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
+	if err != nil {
+		return Variant{}, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+	}
+
+	res, err := fm.evaluateFeature(featureFlag, appContext)
+	if err != nil {
+		return Variant{}, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
+	}
+
+	if res.Variant == nil {
+		log.Printf("no variant assigned for feature %s", featureName)
+		return Variant{}, nil
+	}
+
+	return *res.Variant, nil
 }
 
 // GetFeatureNames returns the names of all available features.
@@ -231,9 +246,9 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 
 	var targetingContext *TargetingContext
 	if appContext != nil {
-		if tc, ok := appContext.(*TargetingContext); ok {
+		if tc, ok := appContext.(TargetingContext); ok {
 			result.TargetingID = tc.UserID
-			targetingContext = tc
+			targetingContext = &tc
 		}
 	}
 
