@@ -32,9 +32,9 @@ type FeatureManager struct {
 
 // Options configures the behavior of the FeatureManager.
 type Options struct {
-	// Filters is a list of custom feature filters that will be used during feature flag evaluation.
-	// Each filter must implement the FeatureFilter interface.
-	Filters []FeatureFilter
+    // Filters is a list of custom feature filters that will be used during feature flag evaluation.
+    // Each filter must implement the FeatureFilter interface.
+    Filters []FeatureFilter
 }
 
 // NewFeatureManager creates and initializes a new instance of the FeatureManager.
@@ -58,13 +58,8 @@ func NewFeatureManager(provider FeatureFlagProvider, options *Options) (*Feature
 		options = &Options{}
 	}
 
-	filters := []FeatureFilter{
-		&TimeWindowFilter{},
-	}
-
-	filters = append(filters, options.Filters...)
 	featureFilters := make(map[string]FeatureFilter)
-	for _, filter := range filters {
+	for _, filter := range options.Filters {
 		featureFilters[filter.Name()] = filter
 	}
 
@@ -89,7 +84,7 @@ func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
-
+	
 	res, err := fm.evaluateFeature(featureFlag, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
