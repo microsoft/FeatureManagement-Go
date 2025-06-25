@@ -51,7 +51,9 @@ func NewFeatureManager(provider FeatureFlagProvider, options *Options) (*Feature
 	filters = append(filters, options.Filters...)
 	featureFilters := make(map[string]FeatureFilter)
 	for _, filter := range filters {
-		featureFilters[filter.Name()] = filter
+		if filter != nil {
+			featureFilters[filter.Name()] = filter
+		}
 	}
 
 	return &FeatureManager{
