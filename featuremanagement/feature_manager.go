@@ -60,6 +60,7 @@ func NewFeatureManager(provider FeatureFlagProvider, options *Options) (*Feature
 
 	filters := []FeatureFilter{
 		&TargetingFilter{},
+		&TimeWindowFilter{},
 	}
 
 	filters = append(filters, options.Filters...)
