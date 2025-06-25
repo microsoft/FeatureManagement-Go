@@ -122,9 +122,9 @@ func (fm *FeatureManager) GetFeatureNames() []string {
 		return nil
 	}
 
-	res := make([]string, len(flags))
-	for _, flag := range flags {
-		res = append(res, flag.ID)
+	res := make([]string, 0, len(flags))
+	for i, flag := range flags {
+		res[i] = flag.ID
 	}
 
 	return res
