@@ -44,7 +44,8 @@ func (t *TargetingFilter) Name() string {
 
 func (t *TargetingFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appCtx any) (bool, error) {
 	// Validate parameters
-	if err := validate(evalCtx); err != nil {
+	params, err := getTargetingParams(evalCtx)
+	if err != nil {
 		return false, err
 	}
 
@@ -52,17 +53,6 @@ func (t *TargetingFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appCt
 	targetingCtx, ok := appCtx.(TargetingContext)
 	if !ok {
 		return false, fmt.Errorf("the app context is required for targeting filter and must be of type TargetingContext")
-	}
-
-	// Unmarshal parameters to our structured type
-	paramsBytes, err := json.Marshal(evalCtx.Parameters)
-	if err != nil {
-		return false, fmt.Errorf("failed to marshal targeting parameters: %w", err)
-	}
-
-	var params TargetingFilterParameters
-	if err := json.Unmarshal(paramsBytes, &params); err != nil {
-		return false, fmt.Errorf("invalid targeting parameters format: %w", err)
 	}
 
 	// Check exclusions
@@ -111,33 +101,33 @@ func (t *TargetingFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appCt
 	return isTargetedPercentile(targetingCtx.UserID, hint, 0, params.Audience.DefaultRolloutPercentage)
 }
 
-func validate(evalCtx FeatureFilterEvaluationContext) error {
+func getTargetingParams(evalCtx FeatureFilterEvaluationContext) (TargetingFilterParameters, error) {
 	// First, unmarshal the parameters to our structured type
 	paramsBytes, err := json.Marshal(evalCtx.Parameters)
 	if err != nil {
-		return fmt.Errorf("failed to marshal targeting parameters: %w", err)
+		return TargetingFilterParameters{}, fmt.Errorf("failed to marshal targeting parameters: %w", err)
 	}
 
 	var params TargetingFilterParameters
 	if err := json.Unmarshal(paramsBytes, &params); err != nil {
-		return fmt.Errorf("invalid targeting parameters format: %w", err)
+		return TargetingFilterParameters{}, fmt.Errorf("invalid targeting parameters format: %w", err)
 	}
 
 	// Validate DefaultRolloutPercentage
 	if params.Audience.DefaultRolloutPercentage < 0 || params.Audience.DefaultRolloutPercentage > 100 {
-		return fmt.Errorf("invalid feature flag: %s. Audience.DefaultRolloutPercentage must be a number between 0 and 100", evalCtx.FeatureName)
+		return TargetingFilterParameters{}, fmt.Errorf("invalid feature flag: %s. Audience.DefaultRolloutPercentage must be a number between 0 and 100", evalCtx.FeatureName)
 	}
 
 	// Validate RolloutPercentage for each group
 	if len(params.Audience.Groups) > 0 {
 		for _, group := range params.Audience.Groups {
 			if group.RolloutPercentage < 0 || group.RolloutPercentage > 100 {
-				return fmt.Errorf("invalid feature flag: %s. RolloutPercentage of group %s must be a number between 0 and 100", evalCtx.FeatureName, group.Name)
+				return TargetingFilterParameters{}, fmt.Errorf("invalid feature flag: %s. RolloutPercentage of group %s must be a number between 0 and 100", evalCtx.FeatureName, group.Name)
 			}
 		}
 	}
 
-	return nil
+	return params, nil
 }
 
 // isTargetedPercentile determines if the user is part of the audience based on percentile range
