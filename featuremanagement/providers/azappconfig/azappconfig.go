@@ -12,6 +12,10 @@ import (
 	fm "github.com/microsoft/Featuremanagement-Go/featuremanagement"
 )
 
+type featureConfig struct {
+	FeatureManagement fm.FeatureManagement `json:"feature_management"`
+}
+
 type FeatureFlagProvider struct {
 	azappcfg     *azureappconfiguration.AzureAppConfiguration
 	featureFlags []fm.FeatureFlag
@@ -19,28 +23,26 @@ type FeatureFlagProvider struct {
 }
 
 func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguration) (*FeatureFlagProvider, error) {
-	var featureManagement fm.FeatureManagement
-	if err := azappcfg.Unmarshal(&featureManagement, nil); err != nil {
+	var fc featureConfig
+	if err := azappcfg.Unmarshal(&fc, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal feature management: %w", err)
 	}
-
 	provider := &FeatureFlagProvider{
 		azappcfg:     azappcfg,
-		featureFlags: featureManagement.FeatureFlags,
+		featureFlags: fc.FeatureManagement.FeatureFlags,
 	}
 
 	// Register refresh callback to update feature management on configuration changes
 	azappcfg.OnRefreshSuccess(func() {
-		var updatedFM fm.FeatureManagement
-		err := azappcfg.Unmarshal(&updatedFM, nil)
+		var updatedFC featureConfig
+		err := azappcfg.Unmarshal(&updatedFC, nil)
 		if err != nil {
 			log.Printf("Error unmarshalling updated configuration: %s", err)
 			return
 		}
-
 		provider.mu.Lock()
 		defer provider.mu.Unlock()
-		provider.featureFlags = updatedFM.FeatureFlags
+		provider.featureFlags = updatedFC.FeatureManagement.FeatureFlags
 	})
 
 	return provider, nil
