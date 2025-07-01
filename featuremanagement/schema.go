@@ -142,17 +142,3 @@ const (
 	// StatusOverrideDisabled indicates the feature is disabled
 	StatusOverrideDisabled StatusOverride = "Disabled"
 )
-
-// EvaluationResult contains information about a feature flag evaluation
-type EvaluationResult struct {
-	// Feature contains the evaluated feature flag
-	Feature *FeatureFlag
-	// Enabled indicates the final state of the feature after evaluation
-	Enabled bool
-	// TargetingID is the identifier used for consistent targeting
-	TargetingID string
-	// Variant is the selected variant (if any)
-	Variant *VariantDefinition
-	// VariantAssignmentReason explains why the variant was assigned
-	VariantAssignmentReason VariantAssignmentReason
-}
