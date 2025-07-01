@@ -12,10 +12,6 @@ import (
 	fm "github.com/microsoft/Featuremanagement-Go/featuremanagement"
 )
 
-type featureConfig struct {
-	FeatureManagement fm.FeatureManagement `json:"feature_management"`
-}
-
 type FeatureFlagProvider struct {
 	azappcfg     *azureappconfiguration.AzureAppConfiguration
 	featureFlags []fm.FeatureFlag
@@ -23,6 +19,10 @@ type FeatureFlagProvider struct {
 }
 
 func NewFeatureFlagProvider(azappcfg *azureappconfiguration.AzureAppConfiguration) (*FeatureFlagProvider, error) {
+	type featureConfig struct {
+		FeatureManagement fm.FeatureManagement `json:"feature_management"`
+	}
+	
 	var fc featureConfig
 	if err := azappcfg.Unmarshal(&fc, nil); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal feature management: %w", err)
