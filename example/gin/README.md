@@ -1,6 +1,6 @@
 # Gin Feature Flags Web App
 
-This is a Gin web application using a feature flag in Azure App Configuration to dynamically control the availability of a new web pagee without restarting or redeploying it.
+This is a Gin web application using a feature flag in Azure App Configuration to dynamically control the availability of a new web page without restarting or redeploying it.
 
 ## Prerequisites
 
