@@ -28,7 +28,8 @@ func loadAzureAppConfiguration(ctx context.Context) (*azureappconfiguration.Azur
 		ConnectionString: connectionString,
 	}
 
-	options := &azureappconfiguration.Options{		FeatureFlagOptions: azureappconfiguration.FeatureFlagOptions{
+	options := &azureappconfiguration.Options{		
+		FeatureFlagOptions: azureappconfiguration.FeatureFlagOptions{
 			Enabled: true,
 			Selectors: []azureappconfiguration.Selector{
 				{
