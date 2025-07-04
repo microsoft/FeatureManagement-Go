@@ -4,8 +4,20 @@ Feature management provides a way to develop and expose application functionalit
 
 ## Installation
 
+#### Core Module
+
+This module has no external dependencies and is suitable for local or custom feature flag providers.
+
 ```bash
 go get github.com/microsoft/Featuremanagement-Go/featuremanagement
+```
+
+#### Azure App Configuration feature flag provider
+
+Load feature flags from Azure App Configuration. External dependencies are decoupled from the core `featuremanagement` module and can be installed independently as needed.
+
+```bash
+go get github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
 ```
 
 ## Examples
