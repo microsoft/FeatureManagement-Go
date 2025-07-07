@@ -2,6 +2,29 @@
 
 Feature management provides a way to develop and expose application functionality based on features. Many applications have special requirements when a new feature is developed such as when the feature should be enabled and under what conditions. This library provides a way to define these relationships, and also integrates into common Golang code patterns to make exposing these features possible.
 
+## Installation
+
+#### Core Module
+
+No dependency on any Azure modules.
+
+```bash
+go get github.com/microsoft/Featuremanagement-Go/featuremanagement
+```
+
+#### Feature flag provider
+
+Built-in feature flag provider for Azure App Configuration.
+
+```bash
+go get github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
+```
+
+## Examples
+
+- [Console Application](./example/console)
+- [Web Application](./example/gin)
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
