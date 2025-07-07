@@ -22,8 +22,8 @@ go get github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/aza
 
 ## Examples
 
-- [Console Application](./example/console)
-- [Web Application](./example/gin)
+- [Console Application](../example/console)
+- [Web Application](../example/gin)
 
 ## Contributing
 
