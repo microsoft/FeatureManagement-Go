@@ -8,6 +8,20 @@ import (
 	"log"
 )
 
+// EvaluationResult contains information about a feature flag evaluation
+type EvaluationResult struct {
+	// Feature contains the evaluated feature flag
+	Feature *FeatureFlag
+	// Enabled indicates the final state of the feature after evaluation
+	Enabled bool
+	// TargetingID is the identifier used for consistent targeting
+	TargetingID string
+	// Variant is the selected variant (if any)
+	Variant *Variant
+	// VariantAssignmentReason explains why the variant was assigned
+	VariantAssignmentReason VariantAssignmentReason
+}
+
 // FeatureManager is responsible for evaluating feature flags and their variants.
 // It is the main entry point for interacting with the feature management library.
 type FeatureManager struct {
@@ -77,7 +91,7 @@ func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
-
+	
 	res, err := fm.evaluateFeature(featureFlag, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
@@ -183,7 +197,9 @@ func (fm *FeatureManager) isEnabled(featureFlag FeatureFlag, appContext any) (bo
 }
 
 func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext any) (EvaluationResult, error) {
-	result := EvaluationResult{}
+	result := EvaluationResult{
+		Feature: &featureFlag,
+	}
 
 	// Validate feature flag format
 	if err := validateFeatureFlag(featureFlag); err != nil {
@@ -193,7 +209,7 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 	// Evaluate if feature is enabled
 	enabled, err := fm.isEnabled(featureFlag, appContext)
 	if err != nil {
-		return result, fmt.Errorf("failed to evaluate feature flag: %w", err)
+		return result, err
 	}
 	result.Enabled = enabled
 
