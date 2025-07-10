@@ -91,7 +91,7 @@ func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
-	
+
 	res, err := fm.evaluateFeature(featureFlag, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
