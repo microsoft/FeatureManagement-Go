@@ -3,6 +3,13 @@
 
 package featuremanagement
 
+import (
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"math"
+)
+
 // FeatureFilterEvaluationContext provides the context information needed
 // to evaluate a feature filter.
 type FeatureFilterEvaluationContext struct {
@@ -51,4 +58,82 @@ type FeatureFilter interface {
 
 	// Evaluate determines whether a feature should be enabled based on the provided contexts
 	Evaluate(evalCtx FeatureFilterEvaluationContext, appCtx any) (bool, error)
+}
+
+// isTargetedPercentile determines if the user is part of the audience based on percentage range
+func isTargetedPercentile(userID string, hint string, from float64, to float64) (bool, error) {
+	// Validate percentage ranges
+	if from < 0 || from > 100 {
+		return false, fmt.Errorf("the 'from' value must be between 0 and 100")
+	}
+	if to < 0 || to > 100 {
+		return false, fmt.Errorf("the 'to' value must be between 0 and 100")
+	}
+	if from > to {
+		return false, fmt.Errorf("the 'from' value cannot be larger than the 'to' value")
+	}
+
+	audienceContextID := constructAudienceContextID(userID, hint)
+
+	// Convert to uint32 for percentage calculation
+	contextMarker, err := stringToUint32(audienceContextID)
+	if err != nil {
+		return false, err
+	}
+
+	// Calculate percentage (0-100)
+	contextPercentage := (float64(contextMarker) / float64(math.MaxUint32)) * 100
+
+	// Handle edge case of exact 100 bucket
+	if to == 100 {
+		return contextPercentage >= from, nil
+	}
+
+	return contextPercentage >= from && contextPercentage < to, nil
+}
+
+// isTargetedGroup determines if the user is part of the audience based on groups
+func isTargetedGroup(sourceGroups []string, targetedGroups []string) bool {
+	if len(sourceGroups) == 0 {
+		return false
+	}
+
+	// Check if any source group is in the targeted groups
+	for _, sourceGroup := range sourceGroups {
+		for _, targetedGroup := range targetedGroups {
+			if sourceGroup == targetedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// isTargetedUser determines if the user is part of the audience based on user ID
+func isTargetedUser(userID string, users []string) bool {
+	if userID == "" {
+		return false
+	}
+
+	// Check if the user is in the targeted users list
+	for _, user := range users {
+		if userID == user {
+			return true
+		}
+	}
+
+	return false
+}
+
+// constructAudienceContextID builds the context ID for the audience
+func constructAudienceContextID(userID string, hint string) string {
+	return fmt.Sprintf("%s\n%s", userID, hint)
+}
+
+// stringToUint32 converts a string to a uint32 using SHA-256 hashing
+func stringToUint32(s string) (uint32, error) {
+	hash := sha256.Sum256([]byte(s))
+	// Extract first 4 bytes and convert to uint32 (little-endian)
+	return binary.LittleEndian.Uint32(hash[:4]), nil
 }
