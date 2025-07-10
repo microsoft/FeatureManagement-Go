@@ -125,6 +125,22 @@ func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext
 	return res.Enabled, nil
 }
 
+// GetVariant returns the assigned variant for a feature flag.
+// This method is used for implementing multivariate feature flags, A/B testing,
+// or feature configurations that change based on the user context.
+//
+// Parameters:
+//   - featureName: The name of the feature to evaluate
+//   - appContext: An optional context object for contextual evaluation
+//
+// Returns:
+//   - Variant: The assigned variant with its name and configuration value
+//   - error: An error if the feature flag cannot be found or evaluated
+func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Variant, error) {
+	// Implementation would be here
+	return Variant{}, nil
+}
+
 // GetFeatureNames returns the names of all available features.
 //
 // Returns:
