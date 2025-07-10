@@ -60,9 +60,9 @@ type FeatureFilter interface {
 	Evaluate(evalCtx FeatureFilterEvaluationContext, appCtx any) (bool, error)
 }
 
-// isTargetedPercentile determines if the user is part of the audience based on percentage range
+// isTargetedPercentile determines if the user is part of the audience based on percentile range
 func isTargetedPercentile(userID string, hint string, from float64, to float64) (bool, error) {
-	// Validate percentage ranges
+	// Validate percentile range
 	if from < 0 || from > 100 {
 		return false, fmt.Errorf("the 'from' value must be between 0 and 100")
 	}
@@ -76,7 +76,7 @@ func isTargetedPercentile(userID string, hint string, from float64, to float64) 
 	audienceContextID := constructAudienceContextID(userID, hint)
 
 	// Convert to uint32 for percentage calculation
-	contextMarker, err := stringToUint32(audienceContextID)
+	contextMarker, err := hashStringToUint32(audienceContextID)
 	if err != nil {
 		return false, err
 	}
@@ -131,8 +131,8 @@ func constructAudienceContextID(userID string, hint string) string {
 	return fmt.Sprintf("%s\n%s", userID, hint)
 }
 
-// stringToUint32 converts a string to a uint32 using SHA-256 hashing
-func stringToUint32(s string) (uint32, error) {
+// hashStringToUint32 converts a string to a uint32 using SHA-256 hashing
+func hashStringToUint32(s string) (uint32, error) {
 	hash := sha256.Sum256([]byte(s))
 	// Extract first 4 bytes and convert to uint32 (little-endian)
 	return binary.LittleEndian.Uint32(hash[:4]), nil
