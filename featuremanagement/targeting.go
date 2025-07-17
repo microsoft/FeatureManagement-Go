@@ -6,12 +6,15 @@ package featuremanagement
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math"
+
+	"github.com/go-viper/mapstructure/v2"
 )
 
-type TargetingFilter struct{}
+type TargetingFilter struct {
+	decoder *mapstructure.Decoder
+}
 
 // TargetingGroup defines a named group with a specific rollout percentage
 type TargetingGroup struct {
@@ -102,15 +105,21 @@ func (t *TargetingFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appCt
 }
 
 func getTargetingParams(evalCtx FeatureFilterEvaluationContext) (TargetingFilterParameters, error) {
-	// First, unmarshal the parameters to our structured type
-	paramsBytes, err := json.Marshal(evalCtx.Parameters)
-	if err != nil {
-		return TargetingFilterParameters{}, fmt.Errorf("failed to marshal targeting parameters: %w", err)
+	var params TargetingFilterParameters
+	config := &mapstructure.DecoderConfig{
+		Result:           &params,
+		WeaklyTypedInput: true,
+		TagName:          "json",
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.StringToSliceHookFunc(","),
+		),
 	}
 
-	var params TargetingFilterParameters
-	if err := json.Unmarshal(paramsBytes, &params); err != nil {
-		return TargetingFilterParameters{}, fmt.Errorf("invalid targeting parameters format: %w", err)
+	decoder, _ := mapstructure.NewDecoder(config)
+	err := decoder.Decode(evalCtx.Parameters)
+	if err != nil {
+		return TargetingFilterParameters{}, fmt.Errorf("failed to decode feature flag parameters: %v", err)
 	}
 
 	// Validate DefaultRolloutPercentage
