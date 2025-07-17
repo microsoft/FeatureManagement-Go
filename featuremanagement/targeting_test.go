@@ -11,30 +11,30 @@ import (
 
 func TestTargetingFilter(t *testing.T) {
 	featureFlagData := map[string]any{
-		"id":          "ComplexTargeting",
-		"description": "A feature flag using a targeting filter, that will return true for Alice, Stage1, and 50% of Stage2. Dave and Stage3 are excluded. The default rollout percentage is 25%.",
-		"enabled":     true,
-		"conditions": map[string]any{
-			"client_filters": []any{
+		"ID":          "ComplexTargeting",
+		"Description": "A feature flag using a targeting filter, that will return true for Alice, Stage1, and 50% of Stage2. Dave and Stage3 are excluded. The default rollout percentage is 25%.",
+		"Enabled":     true,
+		"Conditions": map[string]any{
+			"ClientFilters": []any{
 				map[string]any{
-					"name": "Microsoft.Targeting",
-					"parameters": map[string]any{
-						"audience": map[string]any{
-							"users": []any{"Alice"},
-							"groups": []any{
+					"Name": "Microsoft.Targeting",
+					"Parameters": map[string]any{
+						"Audience": map[string]any{
+							"Users": []any{"Alice"},
+							"Groups": []any{
 								map[string]any{
-									"name":               "Stage1",
-									"rollout_percentage": 100,
+									"Name":              "Stage1",
+									"RolloutPercentage": 100,
 								},
 								map[string]any{
-									"name":               "Stage2",
-									"rollout_percentage": 50,
+									"Name":              "Stage2",
+									"RolloutPercentage": 50,
 								},
 							},
-							"default_rollout_percentage": 25,
-							"exclusion": map[string]any{
-								"users":  []any{"Dave"},
-								"groups": []any{"Stage3"},
+							"DefaultRolloutPercentage": 25,
+							"Exclusion": map[string]any{
+								"Users":  []any{"Dave"},
+								"Groups": []any{"Stage3"},
 							},
 						},
 					},
@@ -43,20 +43,8 @@ func TestTargetingFilter(t *testing.T) {
 		},
 	}
 
-	// Parse the JSON
 	var featureFlag FeatureFlag
-	config := &mapstructure.DecoderConfig{
-		Result:           &featureFlag,
-		WeaklyTypedInput: true,
-		TagName:          "json",
-		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			mapstructure.StringToTimeDurationHookFunc(),
-			mapstructure.StringToSliceHookFunc(","),
-		),
-	}
-
-	decoder, _ := mapstructure.NewDecoder(config)
-	err := decoder.Decode(featureFlagData)
+	err := mapstructure.Decode(featureFlagData, &featureFlag)
 	if err != nil {
 		t.Fatalf("Failed to parse feature flag JSON: %v", err)
 	}

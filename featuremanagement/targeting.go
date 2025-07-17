@@ -12,33 +12,31 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 )
 
-type TargetingFilter struct {
-	decoder *mapstructure.Decoder
-}
+type TargetingFilter struct{}
 
 // TargetingGroup defines a named group with a specific rollout percentage
 type TargetingGroup struct {
-	Name              string  `json:"name"`
-	RolloutPercentage float64 `json:"rollout_percentage"`
+	Name              string
+	RolloutPercentage float64
 }
 
 // TargetingExclusion defines users and groups explicitly excluded from targeting
 type TargetingExclusion struct {
-	Users  []string `json:"users,omitempty"`
-	Groups []string `json:"groups,omitempty"`
+	Users  []string
+	Groups []string
 }
 
 // TargetingAudience defines the targeting configuration for feature rollout
 type TargetingAudience struct {
-	DefaultRolloutPercentage float64             `json:"default_rollout_percentage"`
-	Users                    []string            `json:"users,omitempty"`
-	Groups                   []TargetingGroup    `json:"groups,omitempty"`
-	Exclusion                *TargetingExclusion `json:"exclusion,omitempty"`
+	DefaultRolloutPercentage float64
+	Users                    []string
+	Groups                   []TargetingGroup
+	Exclusion                *TargetingExclusion
 }
 
 // TargetingFilterParameters defines the parameters for the targeting filter
 type TargetingFilterParameters struct {
-	Audience TargetingAudience `json:"audience"`
+	Audience TargetingAudience
 }
 
 func (t *TargetingFilter) Name() string {
@@ -106,18 +104,7 @@ func (t *TargetingFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appCt
 
 func getTargetingParams(evalCtx FeatureFilterEvaluationContext) (TargetingFilterParameters, error) {
 	var params TargetingFilterParameters
-	config := &mapstructure.DecoderConfig{
-		Result:           &params,
-		WeaklyTypedInput: true,
-		TagName:          "json",
-		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			mapstructure.StringToTimeDurationHookFunc(),
-			mapstructure.StringToSliceHookFunc(","),
-		),
-	}
-
-	decoder, _ := mapstructure.NewDecoder(config)
-	err := decoder.Decode(evalCtx.Parameters)
+	err := mapstructure.Decode(evalCtx.Parameters, &params)
 	if err != nil {
 		return TargetingFilterParameters{}, fmt.Errorf("failed to decode feature flag parameters: %v", err)
 	}
