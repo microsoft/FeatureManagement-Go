@@ -4,50 +4,48 @@
 package featuremanagement
 
 import (
-	"encoding/json"
 	"testing"
+
+	"github.com/go-viper/mapstructure/v2"
 )
 
 func TestTargetingFilter(t *testing.T) {
-	// Define the test feature flag with complex targeting rules
-	jsonData := `{
-        "id": "ComplexTargeting",
-        "description": "A feature flag using a targeting filter, that will return true for Alice, Stage1, and 50% of Stage2. Dave and Stage3 are excluded. The default rollout percentage is 25%.",
-        "enabled": true,
-        "conditions": {
-            "client_filters": [
-                {
-                    "name": "Microsoft.Targeting",
-                    "parameters": {
-                        "audience": {
-                            "users": [
-                                "Alice"
-                            ],
-                            "groups": [
-                                {
-                                    "name": "Stage1",
-                                    "rollout_percentage": 100
-                                },
-                                {
-                                    "name": "Stage2",
-                                    "rollout_percentage": 50
-                                }
-                            ],
-                            "default_rollout_percentage": 25,
-                            "exclusion": {
-                                "users": ["Dave"],
-                                "groups": ["Stage3"]
-                            }
-                        }
-                    }
-                }
-            ]
-        }
-    }`
+	featureFlagData := map[string]any{
+		"ID":          "ComplexTargeting",
+		"Description": "A feature flag using a targeting filter, that will return true for Alice, Stage1, and 50% of Stage2. Dave and Stage3 are excluded. The default rollout percentage is 25%.",
+		"Enabled":     true,
+		"Conditions": map[string]any{
+			"ClientFilters": []any{
+				map[string]any{
+					"Name": "Microsoft.Targeting",
+					"Parameters": map[string]any{
+						"Audience": map[string]any{
+							"Users": []any{"Alice"},
+							"Groups": []any{
+								map[string]any{
+									"Name":              "Stage1",
+									"RolloutPercentage": 100,
+								},
+								map[string]any{
+									"Name":              "Stage2",
+									"RolloutPercentage": 50,
+								},
+							},
+							"DefaultRolloutPercentage": 25,
+							"Exclusion": map[string]any{
+								"Users":  []any{"Dave"},
+								"Groups": []any{"Stage3"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-	// Parse the JSON
 	var featureFlag FeatureFlag
-	if err := json.Unmarshal([]byte(jsonData), &featureFlag); err != nil {
+	err := mapstructure.Decode(featureFlagData, &featureFlag)
+	if err != nil {
 		t.Fatalf("Failed to parse feature flag JSON: %v", err)
 	}
 
