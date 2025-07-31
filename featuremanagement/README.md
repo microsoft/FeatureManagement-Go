@@ -22,9 +22,9 @@ go get github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/aza
 
 ## Get started
 
-[**Quickstart**](https://learn.microsoft.com/azure/azure-app-configuration/quickstart-feature-flag-go-console): A quickstart guide is available to learn how to integrate feature flags from *Azure App Configuration* into your Go console applications.
+[**Quickstart of Go Console app**](https://learn.microsoft.com/azure/azure-app-configuration/quickstart-feature-flag-go-console): A quickstart guide is available to learn how to integrate feature flags from *Azure App Configuration* into your Go console applications.
 
-[**Quickstart**](https://learn.microsoft.com/azure/azure-app-configuration/quickstart-feature-flag-go-gin): A quickstart guide is available to learn how to integrate feature flags from *Azure App Configuration* into your Go Gin web applications.
+[**Quickstart of Go Gin web app**](https://learn.microsoft.com/azure/azure-app-configuration/quickstart-feature-flag-go-gin): A quickstart guide is available to learn how to integrate feature flags from *Azure App Configuration* into your Go Gin web applications.
 
 ## Examples
 
