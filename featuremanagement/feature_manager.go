@@ -8,20 +8,6 @@ import (
 	"log"
 )
 
-// EvaluationResult contains information about a feature flag evaluation
-type EvaluationResult struct {
-	// Feature contains the evaluated feature flag
-	Feature *FeatureFlag
-	// Enabled indicates the final state of the feature after evaluation
-	Enabled bool
-	// TargetingID is the identifier used for consistent targeting
-	TargetingID string
-	// Variant is the selected variant (if any)
-	Variant *Variant
-	// VariantAssignmentReason explains why the variant was assigned
-	VariantAssignmentReason VariantAssignmentReason
-}
-
 // FeatureManager is responsible for evaluating feature flags and their variants.
 // It is the main entry point for interacting with the feature management library.
 type FeatureManager struct {
@@ -34,6 +20,20 @@ type Options struct {
 	// Filters is a list of custom feature filters that will be used during feature flag evaluation.
 	// Each filter must implement the FeatureFilter interface.
 	Filters []FeatureFilter
+}
+
+// EvaluationResult contains information about a feature flag evaluation
+type EvaluationResult struct {
+	// Feature contains the evaluated feature flag
+	Feature *FeatureFlag
+	// Enabled indicates the final state of the feature after evaluation
+	Enabled bool
+	// TargetingID is the identifier used for consistent targeting
+	TargetingID string
+	// Variant is the selected variant (if any)
+	Variant *Variant
+	// VariantAssignmentReason explains why the variant was assigned
+	VariantAssignmentReason VariantAssignmentReason
 }
 
 // NewFeatureManager creates and initializes a new instance of the FeatureManager.
@@ -127,7 +127,7 @@ func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext
 
 // GetVariant returns the assigned variant for a feature flag.
 // This method is used for implementing multivariate feature flags, A/B testing,
-// or feature configurations that change based on the user context.
+// or feature configurations that change based on the user base and user interactions.
 //
 // Parameters:
 //   - featureName: The name of the feature to evaluate
@@ -257,17 +257,16 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 	// Determine variant
 	var variantDef *VariantDefinition
 	reason := VariantAssignmentReasonNone
-
 	// Process variants if present
-	if len(featureFlag.Variants) > 0 {
+	if len(featureFlag.Variants) > 0 && featureFlag.Allocation != nil {
 		if !result.Enabled {
 			reason = VariantAssignmentReasonDefaultWhenDisabled
-			if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenDisabled != "" {
+			if featureFlag.Allocation.DefaultWhenDisabled != "" {
 				variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenDisabled)
 			}
 		} else {
 			// Enabled, assign based on allocation
-			if targetingContext != nil && featureFlag.Allocation != nil {
+			if targetingContext != nil {
 				if variantAssignment, err := assignVariant(featureFlag, *targetingContext); err == nil {
 					variantDef = variantAssignment.Variant
 					reason = variantAssignment.Reason
@@ -277,7 +276,7 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 			// Allocation failed, assign default if specified
 			if variantDef == nil && reason == VariantAssignmentReasonNone {
 				reason = VariantAssignmentReasonDefaultWhenEnabled
-				if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenEnabled != "" {
+				if featureFlag.Allocation.DefaultWhenEnabled != "" {
 					variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenEnabled)
 				}
 			}
