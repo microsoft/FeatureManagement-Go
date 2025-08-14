@@ -295,10 +295,10 @@ func TestGetVariant(t *testing.T) {
 				t.Errorf("Expected variant name 'Big', got '%s'", variant.Name)
 			}
 
-			// Second variant should be undefined due to different seed
-			_, err = manager.GetVariant("VariantFeaturePercentileOff", context)
-			if err == nil {
-				t.Error("Expected error for undefined variant, but got none")
+			// Second variant should be undefined
+			variant, _ = manager.GetVariant("VariantFeaturePercentileOff", context)
+			if variant.ConfigurationValue != nil && variant.Name != "" {
+				t.Error("Expected undefined variant, but got a defined variant")
 			}
 		})
 

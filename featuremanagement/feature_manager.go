@@ -149,7 +149,7 @@ func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Varian
 	}
 
 	if res.Variant == nil {
-		return Variant{}, fmt.Errorf("no variant assigned for feature %s", featureName)
+		return Variant{}, nil
 	}
 
 	return *res.Variant, nil
@@ -337,10 +337,6 @@ func getVariantAssignment(featureFlag FeatureFlag, variantName string, reason Va
 }
 
 func assignVariant(featureFlag FeatureFlag, targetingContext TargetingContext) (*variantAssignment, error) {
-	if featureFlag.Allocation == nil {
-		return nil, fmt.Errorf("no allocation defined for feature %s", featureFlag.ID)
-	}
-
 	if len(featureFlag.Allocation.User) > 0 {
 		for _, userAlloc := range featureFlag.Allocation.User {
 			if isTargetedUser(targetingContext.UserID, userAlloc.Users) {
