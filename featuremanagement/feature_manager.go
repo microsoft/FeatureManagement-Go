@@ -254,15 +254,15 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 	var variantDef *VariantDefinition
 	reason := VariantAssignmentReasonNone
 	// Process variants if present
-	if len(featureFlag.Variants) > 0 && featureFlag.Allocation != nil {
+	if len(featureFlag.Variants) > 0 {
 		if !result.Enabled {
 			reason = VariantAssignmentReasonDefaultWhenDisabled
-			if featureFlag.Allocation.DefaultWhenDisabled != "" {
+			if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenDisabled != "" {
 				variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenDisabled)
 			}
 		} else {
 			// Enabled, assign based on allocation
-			if targetingContext != nil {
+			if targetingContext != nil && featureFlag.Allocation != nil {
 				if variantAssignment, err := assignVariant(featureFlag, *targetingContext); err == nil {
 					variantDef = variantAssignment.Variant
 					reason = variantAssignment.Reason
@@ -272,7 +272,7 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 			// Allocation failed, assign default if specified
 			if variantDef == nil && reason == VariantAssignmentReasonNone {
 				reason = VariantAssignmentReasonDefaultWhenEnabled
-				if featureFlag.Allocation.DefaultWhenEnabled != "" {
+				if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenEnabled != "" {
 					variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenEnabled)
 				}
 			}
