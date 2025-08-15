@@ -263,7 +263,7 @@ func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext an
 		} else {
 			// Enabled, assign based on allocation
 			if targetingContext != nil && featureFlag.Allocation != nil {
-				if variantAssignment, err := assignVariant(featureFlag, *targetingContext); err == nil {
+				if variantAssignment, err := assignVariant(featureFlag, *targetingContext); variantAssignment != nil && err == nil {
 					variantDef = variantAssignment.Variant
 					reason = variantAssignment.Reason
 				}
