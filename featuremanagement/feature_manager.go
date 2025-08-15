@@ -22,6 +22,20 @@ type Options struct {
 	Filters []FeatureFilter
 }
 
+// EvaluationResult contains information about a feature flag evaluation
+type EvaluationResult struct {
+	// Feature contains the evaluated feature flag
+	Feature *FeatureFlag
+	// Enabled indicates the final state of the feature after evaluation
+	Enabled bool
+	// TargetingID is the identifier used for consistent targeting
+	TargetingID string
+	// Variant is the selected variant (if any)
+	Variant *Variant
+	// VariantAssignmentReason explains why the variant was assigned
+	VariantAssignmentReason VariantAssignmentReason
+}
+
 // NewFeatureManager creates and initializes a new instance of the FeatureManager.
 // This is the entry point for using feature management functionality.
 //
@@ -78,12 +92,12 @@ func (fm *FeatureManager) IsEnabled(featureName string) (bool, error) {
 		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
 
-	res, err := fm.isEnabled(featureFlag, nil)
+	res, err := fm.evaluateFeature(featureFlag, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
 	}
 
-	return res, nil
+	return res.Enabled, nil
 }
 
 // IsEnabledWithAppContext determines if a feature flag is enabled for the given context.
@@ -103,12 +117,38 @@ func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext
 		return false, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
 
-	res, err := fm.isEnabled(featureFlag, appContext)
+	res, err := fm.evaluateFeature(featureFlag, appContext)
 	if err != nil {
 		return false, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
 	}
 
-	return res, nil
+	return res.Enabled, nil
+}
+
+// GetVariant returns the assigned variant for a feature flag.
+// This method is used for implementing multivariate feature flags, A/B testing,
+// or feature configurations that change based on the user base and user interactions.
+//
+// Parameters:
+//   - featureName: The name of the feature to evaluate
+//   - appContext: An optional context object for contextual evaluation
+//
+// Returns:
+//   - Variant: The assigned variant with its name and configuration value. If no variant is assigned, this will be nil.
+//   - error: An error if the feature flag cannot be found or evaluated
+func (fm *FeatureManager) GetVariant(featureName string, appContext any) (*Variant, error) {
+	// Get the feature flag
+	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+	}
+
+	res, err := fm.evaluateFeature(featureFlag, appContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
+	}
+
+	return res.Variant, nil
 }
 
 // GetFeatureNames returns the names of all available features.
@@ -180,4 +220,150 @@ func (fm *FeatureManager) isEnabled(featureFlag FeatureFlag, appContext any) (bo
 
 	// If we get here, we haven't short-circuited, so return opposite result
 	return !shortCircuitEvalResult, nil
+}
+
+func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext any) (EvaluationResult, error) {
+	result := EvaluationResult{
+		Feature: &featureFlag,
+	}
+
+	// Validate feature flag format
+	if err := validateFeatureFlag(featureFlag); err != nil {
+		return result, fmt.Errorf("invalid feature flag: %w", err)
+	}
+
+	// Evaluate if feature is enabled
+	enabled, err := fm.isEnabled(featureFlag, appContext)
+	if err != nil {
+		return result, err
+	}
+	result.Enabled = enabled
+
+	var targetingContext *TargetingContext
+	if appContext != nil {
+		if tc, ok := appContext.(TargetingContext); ok {
+			result.TargetingID = tc.UserID
+			targetingContext = &tc
+		} else if tc, ok := appContext.(*TargetingContext); ok {
+			result.TargetingID = tc.UserID
+			targetingContext = tc
+		}
+	}
+
+	// Determine variant
+	var variantDef *VariantDefinition
+	reason := VariantAssignmentReasonNone
+	// Process variants if present
+	if len(featureFlag.Variants) > 0 {
+		if !result.Enabled {
+			reason = VariantAssignmentReasonDefaultWhenDisabled
+			if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenDisabled != "" {
+				variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenDisabled)
+			}
+		} else {
+			// Enabled, assign based on allocation
+			if targetingContext != nil && featureFlag.Allocation != nil {
+				if variantAssignment, err := assignVariant(featureFlag, *targetingContext); variantAssignment != nil && err == nil {
+					variantDef = variantAssignment.Variant
+					reason = variantAssignment.Reason
+				}
+			}
+
+			// Allocation failed, assign default if specified
+			if variantDef == nil && reason == VariantAssignmentReasonNone {
+				reason = VariantAssignmentReasonDefaultWhenEnabled
+				if featureFlag.Allocation != nil && featureFlag.Allocation.DefaultWhenEnabled != "" {
+					variantDef = getVariant(featureFlag.Variants, featureFlag.Allocation.DefaultWhenEnabled)
+				}
+			}
+		}
+	}
+
+	// Set variant in result
+	if variantDef != nil {
+		result.Variant = &Variant{
+			Name:               variantDef.Name,
+			ConfigurationValue: variantDef.ConfigurationValue,
+		}
+	}
+	result.VariantAssignmentReason = reason
+
+	// Apply status override from variant
+	if variantDef != nil && featureFlag.Enabled {
+		if variantDef.StatusOverride == StatusOverrideEnabled {
+			result.Enabled = true
+		} else if variantDef.StatusOverride == StatusOverrideDisabled {
+			result.Enabled = false
+		}
+	}
+
+	return result, nil
+}
+
+func getVariant(variants []VariantDefinition, name string) *VariantDefinition {
+	for _, v := range variants {
+		if v.Name == name {
+			return &v
+		}
+	}
+
+	return nil
+}
+
+type variantAssignment struct {
+	Variant *VariantDefinition
+	Reason  VariantAssignmentReason
+}
+
+func getVariantAssignment(featureFlag FeatureFlag, variantName string, reason VariantAssignmentReason) *variantAssignment {
+	if variantName == "" {
+		return nil
+	}
+
+	variant := getVariant(featureFlag.Variants, variantName)
+	if variant == nil {
+		log.Printf("Variant %s not found in feature %s", variantName, featureFlag.ID)
+		return nil
+	}
+
+	return &variantAssignment{
+		Variant: variant,
+		Reason:  reason,
+	}
+}
+
+func assignVariant(featureFlag FeatureFlag, targetingContext TargetingContext) (*variantAssignment, error) {
+	if len(featureFlag.Allocation.User) > 0 {
+		for _, userAlloc := range featureFlag.Allocation.User {
+			if isTargetedUser(targetingContext.UserID, userAlloc.Users) {
+				return getVariantAssignment(featureFlag, userAlloc.Variant, VariantAssignmentReasonUser), nil
+			}
+		}
+	}
+
+	if len(featureFlag.Allocation.Group) > 0 {
+		for _, groupAlloc := range featureFlag.Allocation.Group {
+			if isTargetedGroup(targetingContext.Groups, groupAlloc.Groups) {
+				return getVariantAssignment(featureFlag, groupAlloc.Variant, VariantAssignmentReasonGroup), nil
+			}
+		}
+	}
+
+	if len(featureFlag.Allocation.Percentile) > 0 {
+		for _, percentAlloc := range featureFlag.Allocation.Percentile {
+			hint := featureFlag.Allocation.Seed
+			if hint == "" {
+				hint = fmt.Sprintf("allocation\n%s", featureFlag.ID)
+			}
+
+			if ok, _ := isTargetedPercentile(targetingContext.UserID, hint, percentAlloc.From, percentAlloc.To); ok {
+				return getVariantAssignment(featureFlag, percentAlloc.Variant, VariantAssignmentReasonPercentile), nil
+			}
+		}
+	}
+
+	return &variantAssignment{
+		Variant: nil,
+		Reason:  VariantAssignmentReasonNone,
+	}, nil
 }
