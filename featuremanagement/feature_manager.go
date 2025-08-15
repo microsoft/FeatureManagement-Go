@@ -134,25 +134,21 @@ func (fm *FeatureManager) IsEnabledWithAppContext(featureName string, appContext
 //   - appContext: An optional context object for contextual evaluation
 //
 // Returns:
-//   - Variant: The assigned variant with its name and configuration value
+//   - Variant: The assigned variant with its name and configuration value. If no variant is assigned, this will be nil.
 //   - error: An error if the feature flag cannot be found or evaluated
-func (fm *FeatureManager) GetVariant(featureName string, appContext any) (Variant, error) {
+func (fm *FeatureManager) GetVariant(featureName string, appContext any) (*Variant, error) {
 	// Get the feature flag
 	featureFlag, err := fm.featureProvider.GetFeatureFlag(featureName)
 	if err != nil {
-		return Variant{}, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
+		return nil, fmt.Errorf("failed to get feature flag %s: %w", featureName, err)
 	}
 
 	res, err := fm.evaluateFeature(featureFlag, appContext)
 	if err != nil {
-		return Variant{}, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
+		return nil, fmt.Errorf("failed to evaluate feature %s: %w", featureName, err)
 	}
 
-	if res.Variant == nil {
-		return Variant{}, nil
-	}
-
-	return *res.Variant, nil
+	return res.Variant, nil
 }
 
 // GetFeatureNames returns the names of all available features.

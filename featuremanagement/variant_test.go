@@ -213,7 +213,7 @@ func TestGetVariant(t *testing.T) {
 	t.Run("Valid scenarios", func(t *testing.T) {
 		t.Run("Default allocation with disabled feature", func(t *testing.T) {
 			variant, err := manager.GetVariant("VariantFeatureDefaultDisabled", context)
-			if err != nil {
+			if err != nil || variant == nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
@@ -228,7 +228,7 @@ func TestGetVariant(t *testing.T) {
 
 		t.Run("Default allocation with enabled feature", func(t *testing.T) {
 			variant, err := manager.GetVariant("VariantFeatureDefaultEnabled", context)
-			if err != nil {
+			if err != nil || variant == nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
@@ -256,7 +256,7 @@ func TestGetVariant(t *testing.T) {
 
 		t.Run("User allocation", func(t *testing.T) {
 			variant, err := manager.GetVariant("VariantFeatureUser", context)
-			if err != nil {
+			if err != nil || variant == nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
@@ -271,7 +271,7 @@ func TestGetVariant(t *testing.T) {
 
 		t.Run("Group allocation", func(t *testing.T) {
 			variant, err := manager.GetVariant("VariantFeatureGroup", context)
-			if err != nil {
+			if err != nil || variant == nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
@@ -287,7 +287,7 @@ func TestGetVariant(t *testing.T) {
 		t.Run("Percentile allocation with seed", func(t *testing.T) {
 			// First variant should be defined
 			variant, err := manager.GetVariant("VariantFeaturePercentileOn", context)
-			if err != nil {
+			if err != nil || variant == nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
@@ -297,7 +297,7 @@ func TestGetVariant(t *testing.T) {
 
 			// Second variant should be undefined
 			variant, _ = manager.GetVariant("VariantFeaturePercentileOff", context)
-			if variant.ConfigurationValue != nil && variant.Name != "" {
+			if variant != nil {
 				t.Error("Expected undefined variant, but got a defined variant")
 			}
 		})
