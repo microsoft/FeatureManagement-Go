@@ -6,7 +6,12 @@ package featuremanagement
 import (
 	"fmt"
 	"log"
+	"os"
 )
+
+func init() {
+	os.Setenv("FEATURE_MANAGEMENT_GO", moduleVersion)
+}
 
 // FeatureManager is responsible for evaluating feature flags and their variants.
 // It is the main entry point for interacting with the feature management library.
