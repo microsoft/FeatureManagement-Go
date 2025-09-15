@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	os.Setenv("FEATURE_MANAGEMENT_GO", moduleVersion)
+	os.Setenv("MS_FEATURE_MANAGEMENT_GO_VERSION", moduleVersion)
 }
 
 // FeatureManager is responsible for evaluating feature flags and their variants.
