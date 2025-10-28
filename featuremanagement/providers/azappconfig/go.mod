@@ -1,10 +1,10 @@
 module github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
 
-go 1.23.0
+go 1.24.0
 
-require github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration v1.2.0
+require github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration v1.3.0
 
-require github.com/microsoft/Featuremanagement-Go/featuremanagement v1.1.0
+require github.com/microsoft/Featuremanagement-Go/featuremanagement v1.1.1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.2 // indirect
