@@ -14,8 +14,9 @@ import (
 type TimeWindowFilter struct{}
 
 type TimeWindowFilterParameters struct {
-	Start string `json:"start,omitempty"`
-	End   string `json:"end,omitempty"`
+	Start      string
+	End        string
+	Recurrence *RecurrenceParameters
 }
 
 func (t *TimeWindowFilter) Name() string {
@@ -63,12 +64,39 @@ func (t *TimeWindowFilter) Evaluate(evalCtx FeatureFilterEvaluationContext, appC
 	// Get current time
 	now := time.Now()
 
-	// Check if current time is within the window
+	// Check if current time is within the basic window
 	// (after or equal to start time AND before end time)
 	isAfterStart := startTime == nil || !now.Before(*startTime)
 	isBeforeEnd := endTime == nil || now.Before(*endTime)
 
-	return isAfterStart && isBeforeEnd, nil
+	if isAfterStart && isBeforeEnd {
+		return true, nil
+	}
+
+	// Check recurrence if specified
+	if params.Recurrence != nil {
+		// For recurrence, both Start and End are required
+		if startTime == nil {
+			log.Printf("The Microsoft.TimeWindow feature filter is not valid for feature %s. Start is required when Recurrence is specified", evalCtx.FeatureName)
+			return false, nil
+		}
+		if endTime == nil {
+			log.Printf("The Microsoft.TimeWindow feature filter is not valid for feature %s. End is required when Recurrence is specified", evalCtx.FeatureName)
+			return false, nil
+		}
+
+		// Parse recurrence parameters with default timezone offset (0 = UTC)
+		spec, err := parseRecurrenceParameter(startTime, endTime, params.Recurrence, 0)
+		if err != nil {
+			log.Printf("The Microsoft.TimeWindow feature filter is not valid for feature %s. %v", evalCtx.FeatureName, err)
+			return false, nil
+		}
+
+		// Check if current time matches any recurrence occurrence
+		return matchRecurrence(now, spec), nil
+	}
+
+	return false, nil
 }
 
 func parseTime(timeStr string) (time.Time, error) {
