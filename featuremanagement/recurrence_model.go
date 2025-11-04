@@ -6,10 +6,10 @@ package featuremanagement
 import "time"
 
 const (
-	// DaysPerWeek is the number of days in a week
-	DaysPerWeek = 7
-	// OneDayInMilliSeconds is the number of milliseconds in one day
-	OneDayInMilliSeconds = 24 * 60 * 60 * 1000
+	// daysPerWeek is the number of days in a week
+	daysPerWeek = 7
+	// oneDayInMilliSeconds is the number of milliseconds in one day
+	oneDayInMilliSeconds = 24 * 60 * 60 * 1000
 )
 
 // DayOfWeek represents a day of the week (0 = Sunday, 6 = Saturday)
@@ -30,8 +30,8 @@ func (d DayOfWeek) String() string {
 	return [...]string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}[d]
 }
 
-// ParseDayOfWeek converts a string to a DayOfWeek
-func ParseDayOfWeek(s string) (DayOfWeek, bool) {
+// parseDayOfWeek converts a string to a dayOfWeek
+func parseDayOfWeek(s string) (DayOfWeek, bool) {
 	dayMap := map[string]DayOfWeek{
 		"Sunday":    Sunday,
 		"Monday":    Monday,

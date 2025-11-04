@@ -59,7 +59,7 @@ func findPreviousRecurrence(currentTime time.Time, spec *RecurrenceSpec) *recurr
 // findPreviousDailyRecurrence finds the previous occurrence for daily recurrence pattern
 func findPreviousDailyRecurrence(currentTime time.Time, spec *RecurrenceSpec) *recurrenceState {
 	timeGap := currentTime.Sub(spec.StartTime).Milliseconds()
-	numberOfIntervals := int(math.Floor(float64(timeGap) / float64(spec.Pattern.Interval*OneDayInMilliSeconds)))
+	numberOfIntervals := int(math.Floor(float64(timeGap) / float64(spec.Pattern.Interval*oneDayInMilliSeconds)))
 
 	return &recurrenceState{
 		PreviousOccurrence:  addDays(spec.StartTime, numberOfIntervals*spec.Pattern.Interval),
@@ -88,16 +88,16 @@ func findPreviousWeeklyRecurrence(currentTime time.Time, spec *RecurrenceSpec) *
 	timeGap := currentTime.Sub(firstDayOfStartWeek).Milliseconds()
 
 	// Number of intervals before the most recent occurring week
-	numberOfIntervals := int(math.Floor(float64(timeGap) / float64(spec.Pattern.Interval*DaysPerWeek*OneDayInMilliSeconds)))
+	numberOfIntervals := int(math.Floor(float64(timeGap) / float64(spec.Pattern.Interval*daysPerWeek*oneDayInMilliSeconds)))
 
 	// Number of occurrences before the most recent occurring week (can be negative)
 	numberOfOccurrences := numberOfIntervals*len(sortedDaysOfWeek) - findDayIndex(sortedDaysOfWeek, startDay)
 
 	// First day of the latest occurring week
-	firstDayOfLatestOccurringWeek := addDays(firstDayOfStartWeek, numberOfIntervals*spec.Pattern.Interval*DaysPerWeek)
+	firstDayOfLatestOccurringWeek := addDays(firstDayOfStartWeek, numberOfIntervals*spec.Pattern.Interval*daysPerWeek)
 
 	// Check if current time is beyond the last occurring week
-	weekBoundary := addDays(firstDayOfLatestOccurringWeek, DaysPerWeek)
+	weekBoundary := addDays(firstDayOfLatestOccurringWeek, daysPerWeek)
 	if currentTime.After(weekBoundary) {
 		numberOfOccurrences += len(sortedDaysOfWeek)
 		// Day with max offset in the last occurring week
@@ -134,7 +134,7 @@ func findPreviousWeeklyRecurrence(currentTime time.Time, spec *RecurrenceSpec) *
 		}
 	} else {
 		// Previous occurrence is the day with the max offset of previous occurring week
-		firstDayOfPreviousOccurringWeek := addDays(firstDayOfLatestOccurringWeek, -spec.Pattern.Interval*DaysPerWeek)
+		firstDayOfPreviousOccurringWeek := addDays(firstDayOfLatestOccurringWeek, -spec.Pattern.Interval*daysPerWeek)
 		lastDay := sortedDaysOfWeek[len(sortedDaysOfWeek)-1]
 		previousOccurrence = addDays(firstDayOfPreviousOccurringWeek, calculateWeeklyDayOffset(lastDay, spec.Pattern.FirstDayOfWeek))
 	}

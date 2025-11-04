@@ -5,15 +5,16 @@ package featuremanagement
 
 import (
 	"fmt"
+	"slices"
 	"time"
 )
 
 const (
-	valueOutOfRangeErrMsg              = "The value is out of the accepted range."
-	unrecognizableValueErrMsg          = "The value is unrecognizable."
-	requiredParameterMissingErrMsg     = "Value cannot be undefined or empty."
-	startNotMatchedErrMsg              = "Start date is not a valid first occurrence."
-	timeWindowDurationOutOfRangeErrMsg = "Time window duration cannot be longer than how frequently it occurs or be longer than 10 years."
+	valueOutOfRangeErrMsg              = "The value is out of the accepted range"
+	unrecognizableValueErrMsg          = "The value is unrecognizable"
+	requiredParameterMissingErrMsg     = "Value cannot be undefined or empty"
+	startNotMatchedErrMsg              = "Start date is not a valid first occurrence"
+	timeWindowDurationOutOfRangeErrMsg = "Time window duration cannot be longer than how frequently it occurs or be longer than 10 years"
 
 	recurrencePatternType    = "Recurrence.Pattern.Type"
 	recurrenceInterval       = "Recurrence.Pattern.Interval"
@@ -24,27 +25,22 @@ const (
 	numberOfRecurrences      = "Recurrence.Range.NumberOfOccurrences"
 )
 
-// buildInvalidParameterError creates an error message for invalid parameters
-func buildInvalidParameterError(parameterName, additionalInfo string) error {
-	return fmt.Errorf("the %s parameter is not valid. %s", parameterName, additionalInfo)
-}
-
 // parseRecurrenceParameter parses RecurrenceParameters into a RecurrenceSpec object
 // If the parameter is invalid, an error will be returned
 func parseRecurrenceParameter(startTime, endTime *time.Time, recurrenceParams *RecurrenceParameters, timezoneOffset int64) (*RecurrenceSpec, error) {
 	if startTime == nil {
-		return nil, buildInvalidParameterError("Start", requiredParameterMissingErrMsg)
+		return nil, fmt.Errorf("the Start parameter is required for recurrence configuration")
 	}
 	if endTime == nil {
-		return nil, buildInvalidParameterError("End", requiredParameterMissingErrMsg)
+		return nil, fmt.Errorf("the End parameter is required for recurrence configuration")
 	}
 	if !startTime.Before(*endTime) {
-		return nil, buildInvalidParameterError("End", valueOutOfRangeErrMsg)
+		return nil, fmt.Errorf("the Start parameter must be before the End parameter for recurrence configuration")
 	}
 
 	timeWindowDuration := endTime.Sub(*startTime).Milliseconds()
-	if timeWindowDuration > 10*365*OneDayInMilliSeconds {
-		return nil, buildInvalidParameterError("End", timeWindowDurationOutOfRangeErrMsg)
+	if timeWindowDuration > 10*365*oneDayInMilliSeconds {
+		return nil, fmt.Errorf("the End parameter is not valid. %s", timeWindowDurationOutOfRangeErrMsg)
 	}
 
 	pattern, err := parseRecurrencePattern(startTime, endTime, recurrenceParams, timezoneOffset)
@@ -71,18 +67,18 @@ func parseRecurrencePattern(startTime, endTime *time.Time, params *RecurrencePar
 	rawPattern := params.Pattern
 
 	if rawPattern.Type == "" {
-		return nil, buildInvalidParameterError(recurrencePatternType, requiredParameterMissingErrMsg)
+		return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrencePatternType, requiredParameterMissingErrMsg)
 	}
 
 	patternType, ok := ParseRecurrencePatternType(rawPattern.Type)
 	if !ok {
-		return nil, buildInvalidParameterError(recurrencePatternType, unrecognizableValueErrMsg)
+		return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrencePatternType, unrecognizableValueErrMsg)
 	}
 
 	interval := 1
 	if rawPattern.Interval != nil {
 		if *rawPattern.Interval <= 0 {
-			return nil, buildInvalidParameterError(recurrenceInterval, valueOutOfRangeErrMsg)
+			return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceInterval, valueOutOfRangeErrMsg)
 		}
 		interval = *rawPattern.Interval
 	}
@@ -95,16 +91,16 @@ func parseRecurrencePattern(startTime, endTime *time.Time, params *RecurrencePar
 	timeWindowDuration := endTime.Sub(*startTime).Milliseconds()
 
 	if patternType == Daily {
-		if timeWindowDuration > int64(interval)*OneDayInMilliSeconds {
-			return nil, buildInvalidParameterError("End", timeWindowDurationOutOfRangeErrMsg)
+		if timeWindowDuration > int64(interval)*oneDayInMilliSeconds {
+			return nil, fmt.Errorf("the End parameter is not valid. %s", timeWindowDurationOutOfRangeErrMsg)
 		}
 	} else if patternType == Weekly {
 		// Parse FirstDayOfWeek
 		firstDayOfWeek := Sunday
 		if rawPattern.FirstDayOfWeek != nil {
-			day, ok := ParseDayOfWeek(*rawPattern.FirstDayOfWeek)
+			day, ok := parseDayOfWeek(*rawPattern.FirstDayOfWeek)
 			if !ok {
-				return nil, buildInvalidParameterError(recurrenceFirstDayOfWeek, unrecognizableValueErrMsg)
+				return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceFirstDayOfWeek, unrecognizableValueErrMsg)
 			}
 			firstDayOfWeek = day
 		}
@@ -112,15 +108,15 @@ func parseRecurrencePattern(startTime, endTime *time.Time, params *RecurrencePar
 
 		// Parse DaysOfWeek
 		if len(rawPattern.DaysOfWeek) == 0 {
-			return nil, buildInvalidParameterError(recurrenceDaysOfWeek, requiredParameterMissingErrMsg)
+			return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceDaysOfWeek, requiredParameterMissingErrMsg)
 		}
 
 		daysMap := make(map[DayOfWeek]bool)
 		var daysOfWeek []DayOfWeek
 		for _, dayStr := range rawPattern.DaysOfWeek {
-			day, ok := ParseDayOfWeek(dayStr)
+			day, ok := parseDayOfWeek(dayStr)
 			if !ok {
-				return nil, buildInvalidParameterError(recurrenceDaysOfWeek, unrecognizableValueErrMsg)
+				return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceDaysOfWeek, unrecognizableValueErrMsg)
 			}
 			// Deduplicate
 			if !daysMap[day] {
@@ -130,28 +126,22 @@ func parseRecurrencePattern(startTime, endTime *time.Time, params *RecurrencePar
 		}
 
 		if len(daysOfWeek) == 0 {
-			return nil, buildInvalidParameterError(recurrenceDaysOfWeek, requiredParameterMissingErrMsg)
+			return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceDaysOfWeek, requiredParameterMissingErrMsg)
 		}
 
 		// Check duration constraint
-		if timeWindowDuration > int64(interval)*DaysPerWeek*OneDayInMilliSeconds ||
+		if timeWindowDuration > int64(interval)*daysPerWeek*oneDayInMilliSeconds ||
 			!isDurationCompliantWithDaysOfWeek(timeWindowDuration, interval, daysOfWeek, firstDayOfWeek) {
-			return nil, buildInvalidParameterError("End", timeWindowDurationOutOfRangeErrMsg)
+			return nil, fmt.Errorf("the End parameter is not valid. %s", timeWindowDurationOutOfRangeErrMsg)
 		}
 
 		pattern.DaysOfWeek = daysOfWeek
 
 		// Check whether "Start" is a valid first occurrence
 		alignedStartDay := getDayOfWeek(*startTime, timezoneOffset)
-		found := false
-		for _, day := range daysOfWeek {
-			if day == alignedStartDay {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(daysOfWeek, alignedStartDay)
 		if !found {
-			return nil, buildInvalidParameterError("Start", startNotMatchedErrMsg)
+			return nil, fmt.Errorf("the Start parameter is not valid. %s", startNotMatchedErrMsg)
 		}
 	}
 
@@ -163,39 +153,40 @@ func parseRecurrenceRange(startTime *time.Time, params *RecurrenceParameters) (*
 	rawRange := params.Range
 
 	if rawRange.Type == "" {
-		return nil, buildInvalidParameterError(recurrenceRangeType, requiredParameterMissingErrMsg)
+		return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceRangeType, requiredParameterMissingErrMsg)
 	}
 
 	rangeType, ok := ParseRecurrenceRangeType(rawRange.Type)
 	if !ok {
-		return nil, buildInvalidParameterError(recurrenceRangeType, unrecognizableValueErrMsg)
+		return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceRangeType, unrecognizableValueErrMsg)
 	}
 
 	recurrenceRange := &RecurrenceRange{
 		Type: rangeType,
 	}
 
-	if rangeType == EndDate {
+	switch rangeType {
+	case EndDate:
 		var endDate time.Time
 		if rawRange.EndDate != nil {
 			parsed, err := parseTime(*rawRange.EndDate)
 			if err != nil {
-				return nil, buildInvalidParameterError(recurrenceEndDate, unrecognizableValueErrMsg)
+				return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceEndDate, unrecognizableValueErrMsg)
 			}
 			endDate = parsed
 			if endDate.Before(*startTime) {
-				return nil, buildInvalidParameterError(recurrenceEndDate, valueOutOfRangeErrMsg)
+				return nil, fmt.Errorf("the %s parameter is not valid. %s", recurrenceEndDate, valueOutOfRangeErrMsg)
 			}
 		} else {
 			// Maximum date in Go (year 9999)
 			endDate = time.Date(9999, 12, 31, 23, 59, 59, 999999999, time.UTC)
 		}
 		recurrenceRange.EndDate = &endDate
-	} else if rangeType == Numbered {
+	case Numbered:
 		numberOfOccurrences := int(^uint(0) >> 1) // Max int
 		if rawRange.NumberOfOccurrences != nil {
 			if *rawRange.NumberOfOccurrences <= 0 {
-				return nil, buildInvalidParameterError(numberOfRecurrences, valueOutOfRangeErrMsg)
+				return nil, fmt.Errorf("the %s parameter is not valid. %s", numberOfRecurrences, valueOutOfRangeErrMsg)
 			}
 			numberOfOccurrences = *rawRange.NumberOfOccurrences
 		}
@@ -213,10 +204,10 @@ func isDurationCompliantWithDaysOfWeek(duration int64, interval int, daysOfWeek 
 
 	sortedDaysOfWeek := sortDaysOfWeek(daysOfWeek, firstDayOfWeek)
 	prev := sortedDaysOfWeek[0] // the closest occurrence day to the first day of week
-	minGap := int64(DaysPerWeek * OneDayInMilliSeconds)
+	minGap := int64(daysPerWeek * oneDayInMilliSeconds)
 
 	for i := 1; i < len(sortedDaysOfWeek); i++ { // skip the first day
-		gap := int64(calculateWeeklyDayOffset(sortedDaysOfWeek[i], prev)) * OneDayInMilliSeconds
+		gap := int64(calculateWeeklyDayOffset(sortedDaysOfWeek[i], prev)) * oneDayInMilliSeconds
 		if gap < minGap {
 			minGap = gap
 		}
@@ -225,7 +216,7 @@ func isDurationCompliantWithDaysOfWeek(duration int64, interval int, daysOfWeek 
 
 	// It may cross weeks. Check the next week if the interval is one week.
 	if interval == 1 {
-		gap := int64(calculateWeeklyDayOffset(sortedDaysOfWeek[0], prev)) * OneDayInMilliSeconds
+		gap := int64(calculateWeeklyDayOffset(sortedDaysOfWeek[0], prev)) * oneDayInMilliSeconds
 		if gap < minGap {
 			minGap = gap
 		}

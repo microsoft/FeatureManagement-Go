@@ -8,7 +8,7 @@ import "time"
 // calculateWeeklyDayOffset calculates the offset in days between two given days of the week
 // Returns the number of days to be added to day2 to reach day1
 func calculateWeeklyDayOffset(day1, day2 DayOfWeek) int {
-	return (int(day1) - int(day2) + DaysPerWeek) % DaysPerWeek
+	return (int(day1) - int(day2) + daysPerWeek) % daysPerWeek
 }
 
 // sortDaysOfWeek sorts a collection of days of week based on their offsets from a specified first day of week
