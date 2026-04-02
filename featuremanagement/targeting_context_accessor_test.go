@@ -13,7 +13,7 @@ import (
 // mockTargetingContextAccessor implements TargetingContextAccessor for testing
 type mockTargetingContextAccessor struct {
 	targetingContext TargetingContext
-	err             error
+	err              error
 }
 
 func (m *mockTargetingContextAccessor) GetTargetingContext() (TargetingContext, error) {
