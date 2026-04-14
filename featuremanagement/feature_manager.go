@@ -167,7 +167,7 @@ func (fm *FeatureManager) GetFeatureNames() []string {
 		return nil
 	}
 
-	res := make([]string, 0, len(flags))
+	res := make([]string, len(flags))
 	for i, flag := range flags {
 		res[i] = flag.ID
 	}
