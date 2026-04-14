@@ -16,8 +16,9 @@ func init() {
 // FeatureManager is responsible for evaluating feature flags and their variants.
 // It is the main entry point for interacting with the feature management library.
 type FeatureManager struct {
-	featureProvider FeatureFlagProvider
-	featureFilters  map[string]FeatureFilter
+	featureProvider          FeatureFlagProvider
+	featureFilters           map[string]FeatureFilter
+	targetingContextAccessor TargetingContextAccessor
 }
 
 // Options configures the behavior of the FeatureManager.
@@ -25,6 +26,13 @@ type Options struct {
 	// Filters is a list of custom feature filters that will be used during feature flag evaluation.
 	// Each filter must implement the FeatureFilter interface.
 	Filters []FeatureFilter
+
+	// TargetingContextAccessor provides an ambient targeting context for feature evaluation.
+	// When set, the FeatureManager will use it to retrieve the current user's targeting context
+	// whenever IsEnabled or GetVariant is called without an explicit app context.
+	// This avoids the need to pass TargetingContext to every call in web applications
+	// where user identity is already available in the request scope.
+	TargetingContextAccessor TargetingContextAccessor
 }
 
 // EvaluationResult contains information about a feature flag evaluation
@@ -76,8 +84,9 @@ func NewFeatureManager(provider FeatureFlagProvider, options *Options) (*Feature
 	}
 
 	return &FeatureManager{
-		featureProvider: provider,
-		featureFilters:  featureFilters,
+		featureProvider:          provider,
+		featureFilters:           featureFilters,
+		targetingContextAccessor: options.TargetingContextAccessor,
 	}, nil
 }
 
@@ -235,6 +244,13 @@ func (fm *FeatureManager) isEnabled(featureFlag FeatureFlag, appContext any) (bo
 func (fm *FeatureManager) evaluateFeature(featureFlag FeatureFlag, appContext any) (EvaluationResult, error) {
 	result := EvaluationResult{
 		Feature: &featureFlag,
+	}
+
+	// If no app context provided, try to get targeting context from accessor
+	if appContext == nil && fm.targetingContextAccessor != nil {
+		if tc, err := fm.targetingContextAccessor.GetTargetingContext(); err == nil {
+			appContext = tc
+		}
 	}
 
 	// Validate feature flag format
