@@ -3,4 +3,4 @@
 
 package featuremanagement
 
-const moduleVersion = "1.1.1"
+const moduleVersion = "1.1.2"
