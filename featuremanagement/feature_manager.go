@@ -167,7 +167,7 @@ func (fm *FeatureManager) GetFeatureNames() []string {
 		return nil
 	}
 
-	res := make([]string, 0, len(flags))
+	res := make([]string, len(flags))
 	for i, flag := range flags {
 		res[i] = flag.ID
 	}
@@ -202,6 +202,11 @@ func (fm *FeatureManager) isEnabled(featureFlag FeatureFlag, appContext any) (bo
 		matchedFeatureFilter, exists := fm.featureFilters[clientFilter.Name]
 		if !exists {
 			log.Printf("Feature filter %s is not found", clientFilter.Name)
+			if requirementType == RequirementTypeAny {
+				// When "Any", skip missing filters and continue evaluating the rest
+				continue
+			}
+			// When "All", a missing filter means the feature cannot be enabled
 			return false, nil
 		}
 
