@@ -1,6 +1,6 @@
 module github.com/microsoft/Featuremanagement-Go/featuremanagement/providers/azappconfig
 
-go 1.24.0
+go 1.25.0
 
 require github.com/Azure/AppConfiguration-GoProvider/azureappconfiguration v1.3.0
 
@@ -13,7 +13,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
